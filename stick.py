@@ -36,7 +36,7 @@ class Stick(object):
 
         self.endless_x_point = ball.center.x + ball.vel.x * dist_in_frames - 2 * border_w # 10 - координата начала поля
 
-        self.pos = min ((self.endless_x_point) % (2* real_screen_h) + border_w, 2*real_screen_h - (self.endless_x_point) % (2* real_screen_h) + border_w)
+        self.pos = min((self.endless_x_point) % (2 * real_screen_h) + border_w, 2*real_screen_h - (self.endless_x_point) % (2 * real_screen_h) + border_w)
         return self.pos
 
     def new_predict_pos(self, input_vect, border_w, real_screen_h):

@@ -10,7 +10,7 @@ import sys
 from NeuralNetwork import *
 import functions
 from Ball import Ball
-import ai_pols
+# import ai_pols
 from globals import *
 from backpropagation import *
 # player: 1 - есть игрок, 0 - явный алгоритм, -1 - Нейросеть (Keras), 1 - нейросеть ручная
