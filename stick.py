@@ -39,6 +39,17 @@ class Stick(object):
         self.pos = min ((self.endless_x_point) % (2* real_screen_h) + border_w, 2*real_screen_h - (self.endless_x_point) % (2* real_screen_h) + border_w)
         return self.pos
 
-    def new_predict_pos(self, b_x, b_y, b_v_x, b_v_y, st_x, border_w, real_screen_h):
-
+    def new_predict_pos(self, input_vect, border_w, real_screen_h):
+        """
+        Надо переделать функционал аналогично тому, что сверху |\
+        :param input_vect:
+            [0] = ball.center.x
+            [1] = ball.center.y
+            [2] = ball.vel.x
+            [3] = ball.vel.y
+            [4] = st.center.x
+        :param border_w:
+        :param real_screen_h:
+        :return:
+        """
         pass

@@ -1,4 +1,8 @@
 #импорт
+import random
+
+import numpy as np
+
 from stick import Stick
 import pygame
 from pygame.locals import *
@@ -8,6 +12,7 @@ import functions
 from Ball import Ball
 import ai_pols
 from globals import *
+from backpropagation import *
 # player: 1 - есть игрок, 0 - явный алгоритм, -1 - Нейросеть (Keras), 1 - нейросеть ручная
 if True:
     player1 = 1
@@ -57,13 +62,44 @@ if True:
 pygame.init()
 # ai_pols.ai_init()  # Инициализируем нейросеть и обучаем её
 
+ball = Ball(SC_W // 2, SC_H // 2, BA_S, BA_SPEED)
+st1 = Stick(SC_W * 1  / 60,  BORDER, ball)
+st2 = Stick(SC_W * 59 / 60-ST_W, 40, ball)
+
+n_outputs = 3
+n_inputs = 6
+n_hidden = 4
+network = initialize_network(n_inputs, n_hidden, n_outputs)
+
+dataset = np.array([np.random.sample(6)-0.5 for _ in range(2000)])
+for i in range(len(dataset)):
+    vel = 1 ##### не такая !
+    input = ((dataset[i][0]+0.5) * SC_H,
+             (dataset[i][1]+0.5) * SC_W,
+             (dataset[i][2]) * vel,
+             (dataset[i][3]) * vel,
+             (dataset[i][4]+0.5) * SC_H)
+    res = st1.new_predict_pos(input, 2, SC_H-22)
+    if res > input[4] : dataset[i][5] = 2
+    elif res < input[4] : dataset[i][5] = 0
+
+
+# [ input = (b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n, res) , ()
+# _n -- значения, нормированные на единицу, без этого суффикса -- обычные
+# [-0.5 , 0.5]    ->  [0, SC_W] = rez_data      -- перевод координат из нормированных в обычные координаты
+# +0.5 ) * SC_W
+# vel = (ball.vel.x**2 + ball.vel.y**2) ** (1/2)    -- перевод скорости из норм в обычн.
+# ball.vel.x + 0.5) * vel   ???
+# end_pos = predict_pos(b_x, b_y, b_v_x, b_v_y, st_x)
+# -> st_x + end_pos -> res(moving_direction) == input[-1]
+
+train_network(network, dataset, 0.5, 20, n_outputs)
+
 win = pygame.display.set_mode((SC_W + NN_WIDTH, SC_H))
 pygame.display.update()
 clock = pygame.time.Clock()
 
-ball = Ball(SC_W // 2, SC_H // 2, BA_S, BA_SPEED)
-st1 = Stick(SC_W * 1  / 60,  BORDER, ball)
-st2 = Stick(SC_W * 59 / 60-ST_W, 40, ball)
+
 
 #главный цикл
 pl = True
@@ -121,8 +157,13 @@ while pl:
             ball.vel.y = Y
             ball.vel.x = X
     else:
-        if player1 == 1: pass
-        elif player2 == 2:
+        if player1 == 1:
+            # inputs = list()  # b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n
+            vel = (ball.vel.x ** 2 + ball.vel.y ** 2 ) ** 1/2
+            inputs = [ball.center.x / SC_H - 0.5, ball.center.y / SC_H - 0.5, ball.vel.x / vel, ball.vel.y / vel, st1.center.y / SC_H - 0.5]
+            st1.dir = predict(network, inputs)
+            # pass
+        elif player1 == 2:
             if st1.center.x < st1.pos - 15: st1.dir = DOWN
             elif st1.center.x > st1.pos + 15: st1.dir = UP
             else: st1.dir = STOP
