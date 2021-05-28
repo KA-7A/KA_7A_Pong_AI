@@ -92,6 +92,4 @@ def ai_init():
 
         balls_list. append(Ball(x_test[2]*(SC_W - 2*BORDER)-5, x_test[1]*(SC_W - 2*BORDER), 10, (x_test[3]*10, x_test[4]*10)))
         sticks_list.append(Stick(SC_W * 1 / 60,  random.randint(0, SC_H), balls_list[i]))
-
-
     ai_init_and_learn(sticks_list) # Запускаем нашу дискотеку (обучательную)

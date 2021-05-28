@@ -195,17 +195,26 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
         predictions.append(prediction)
     return (predictions)
 
+
 if __name__ == "__main__":
     n_outputs = 3
-    n_inputs = 5
+    n_inputs = 6
     n_hidden = 4
     network = initialize_network(n_inputs, n_hidden, n_outputs)
 
     dataset = list()
+    # [ input = (b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n, res) , ()
+    # _n -- значения, нормированные на единицу, без этого суффикса -- обычные
+    # [-0.5 , 0.5]    ->  [0, SC_W] = rez_data      -- перевод координат из нормированных в обычные координаты
+    # +0.5 ) * SC_W
+    # vel = (ball.vel.x**2 + ball.vel.y**2) ** (1/2)    -- перевод скорости из норм в обычн.
+    # ball.vel.x + 0.5) * vel   ???
+    # end_pos = predict_pos(b_x, b_y, b_v_x, b_v_y, st_x)
+    # -> st_x + end_pos -> res(moving_direction) == input[-1]
 
     train_network(network, dataset, 0.5, 20, n_outputs)
-    inputs = list()
-    res = predict(network, inputs)
+    inputs = list()     # b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n
+    res = predict(network, inputs)  # -> res
 
     if False:
         filename = 'seeds_dataset.csv'
