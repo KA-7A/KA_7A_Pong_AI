@@ -116,7 +116,7 @@ while pl:
             min_top = st1.top
         if min_top == min_top_pr and max_bot == max_bot_pr:
             start = 0
-            real_screen_h = R_SC_H = - min_top + max_bot - BA_S - 2 * BORDER# Все это нужно для рассчета эффективного размера окна, боже дай мне сил
+            real_screen_h = R_SC_H = - min_top + max_bot - BA_S - 2 * BORDER    # Все это нужно для рассчета эффективного размера окна, боже дай мне сил
             print(min_top, max_bot, R_SC_H)
             ball.vel.y = Y
             ball.vel.x = X

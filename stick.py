@@ -25,6 +25,7 @@ class Stick(object):
         self.center.y = self.left + ST_W/2
 
     def predict_pos(self, ball, border_w, real_screen_h): # Явный предикционный алгоритм движения
+        # real_screen_h = SC_H - 22
         # BA_SPEED[0] -- скорость по вертикали; BA_SPEED[1] -- скорость по горизонтали
         # center.x -- коорд по вертикали (выше - меньше), center.y -- коорд по горизонтали
 
@@ -37,3 +38,7 @@ class Stick(object):
 
         self.pos = min ((self.endless_x_point) % (2* real_screen_h) + border_w, 2*real_screen_h - (self.endless_x_point) % (2* real_screen_h) + border_w)
         return self.pos
+
+    def new_predict_pos(self, b_x, b_y, b_v_x, b_v_y, st_x, border_w, real_screen_h):
+
+        pass
