@@ -1,53 +1,57 @@
-#импорт
-import random
+NN_on = False
 
-import numpy as np
+# stick width/ height, ball size
+ST_H = 70
+ST_W = 10
+BA_S = 10
 
-from stick import Stick
-import pygame
-from pygame.locals import *
-import sys
-from NeuralNetwork import *
-import functions
-from Ball import Ball
-# import ai_pols
-from globals import *
-from backpropagation import *
+#dcree heigh/width
+SC_W = 800
+SC_H = 400
+NN_WIDTH = 200
+
+min_top = SC_H
+max_bot = 0
+min_top_pr = SC_H+1
+max_bot_pr = -1
+
+border_w = BORDER = 1
+real_screen_h = R_SC_H = 0
+
+BORDER = 1
+FPS = 30
+
+#ball's and stick's speed
+# BA_SPEED[0] -- скорость по вертикали; BA_SPEED[1] -- скорость по горизонтали
+X = 4
+Y = 4
+BA_SPEED = [0, 0]
+ST_SPEED = 15
+MAX_SPEED = 30
+
+#consts
+right = 0
+top = 0
+STOP = "stop"
+UP = "up"
+DOWN = "down"
+
+#colors
+BLACK = (0  , 0  , 0  )
+WHITE = (255, 255, 255)
+BLUE  = (0  , 0  , 200)
+RED   = (200, 0  , 0  )
+GREEN = (0  , 200, 0  )
+YELLOW= (255, 255, 0  )
+
+from tensorflow import keras
+from tensorflow.keras import layers
+import matplotlib.pyplot as plt
 # player: 1 - есть игрок, 0 - явный алгоритм, -1 - Нейросеть (Keras), 1 - нейросеть ручная
 if True:
     player1 = 1
     player2 = 0
 
-    #stick width/ height, ball size
-    ST_H = 70
-    ST_W = 10
-    BA_S = 10
-
-    #dcree heigh/width
-    SC_W = 800
-    SC_H = 400
-    NN_WIDTH = 200
-
-    border_w = BORDER = 1
-    real_screen_h = R_SC_H = 0
-    FPS = 60
-
-    #colors
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
-    #ball's and stick's speed
-    # BA_SPEED[0] -- скорость по вертикали; BA_SPEED[1] -- скорость по горизонтали
-    X = 4
-    Y = 4
-    BA_SPEED = [0, 0]
-    ST_SPEED = 15
-
-    #consts
-    right = 0
-    top = 0
-    STOP = "stop"
-    UP = "up"
-    DOWN = "down"
     i = 1
 
     st1_pos = 0
@@ -58,6 +62,14 @@ if True:
     min_top_pr = SC_H+1
     max_bot_pr = -1
 
+import pygame
+from Stick import Stick
+import functions
+from Ball import Ball
+from backpropagation import *
+import numpy as np
+import ai_pols
+
 #инициализация
 pygame.init()
 # ai_pols.ai_init()  # Инициализируем нейросеть и обучаем её
@@ -67,33 +79,27 @@ st1 = Stick(SC_W * 1  / 60,  BORDER, ball)
 st2 = Stick(SC_W * 59 / 60-ST_W, 40, ball)
 
 n_outputs = 3
-n_inputs = 6
+n_inputs = 5
 n_hidden = 4
 network = initialize_network(n_inputs, n_hidden, n_outputs)
 
 dataset = np.array([np.random.sample(6)-0.5 for _ in range(2000)])
 for i in range(len(dataset)):
-    vel = 1 ##### не такая !
-    input = ((dataset[i][0]+0.5) * SC_H,
-             (dataset[i][1]+0.5) * SC_W,
-             (dataset[i][2]) * vel,
-             (dataset[i][3]) * vel,
-             (dataset[i][4]+0.5) * SC_H)
-    res = st1.new_predict_pos(input, 2, SC_H-22)
-    if res > input[4] : dataset[i][5] = 2
-    elif res < input[4] : dataset[i][5] = 0
+    if dataset[i][0] > dataset[i][4] : dataset[i][5] = 2
+    elif dataset[i][0] == dataset[i][4]: dataset[i][5] = 1
+    elif dataset[i][0] < dataset[i][4] : dataset[i][5] = 0
 
+test = dataset[-100:]
+dataset = dataset[:-100]
 
-# [ input = (b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n, res) , ()
-# _n -- значения, нормированные на единицу, без этого суффикса -- обычные
-# [-0.5 , 0.5]    ->  [0, SC_W] = rez_data      -- перевод координат из нормированных в обычные координаты
-# +0.5 ) * SC_W
-# vel = (ball.vel.x**2 + ball.vel.y**2) ** (1/2)    -- перевод скорости из норм в обычн.
-# ball.vel.x + 0.5) * vel   ???
-# end_pos = predict_pos(b_x, b_y, b_v_x, b_v_y, st_x)
-# -> st_x + end_pos -> res(moving_direction) == input[-1]
+accuracy_by_epoch = train_network(network, dataset, test, 0.5, 20, n_outputs)
+plt.plot(accuracy_by_epoch)
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
 
-train_network(network, dataset, 0.5, 20, n_outputs)
 
 win = pygame.display.set_mode((SC_W + NN_WIDTH, SC_H))
 pygame.display.update()
@@ -160,13 +166,18 @@ while pl:
         if player1 == 1:
             # inputs = list()  # b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n
             vel = (ball.vel.x ** 2 + ball.vel.y ** 2 ) ** 1/2
-            inputs = [ball.center.x / SC_H - 0.5, ball.center.y / SC_H - 0.5, ball.vel.x / vel, ball.vel.y / vel, st1.center.y / SC_H - 0.5]
-            st1.dir = predict(network, inputs)
+            inputs = (ball.center.x / SC_H - 0.5, ball.center.y / SC_H - 0.5, ball.vel.x / vel, ball.vel.y / vel, st1.center.x / SC_H - 0.5)
+            pred = predict(network, inputs)
+            if pred == 2: st1.dir = DOWN
+            elif pred == 0: st1.dir = UP
+            else: st1.dir = STOP
             # pass
         elif player1 == 2:
             if st1.center.x < st1.pos - 15: st1.dir = DOWN
             elif st1.center.x > st1.pos + 15: st1.dir = UP
             else: st1.dir = STOP
+        elif player1 == -1:
+            pass
         else:
             vel = (st1.ball.vel.x ** 2 + st1.ball.vel.y ** 2 ) ** 1/2
             in_vect = np.array([st1.center.x / SC_H - 0.5, st1.ball.center.x / SC_H - 0.5, st1.ball.center.y / SC_W -

@@ -112,6 +112,7 @@ def forward_propagate(network, row):
     for layer in network:
         new_inputs = []
         for neuron in layer:
+            # inputs пустое
             activation = activate(neuron['weights'], inputs)
             neuron['output'] = transfer(activation)
             new_inputs.append(neuron['output'])
@@ -130,7 +131,7 @@ def backward_propagate_error(network, expected):
         layer = network[i]
         errors = list()
         if i != len(network) - 1:
-            for j in range(len(layer)):
+            for j in range(len(layer)):  # по чему здесь пробегаем?
                 error = 0.0
                 for neuron in network[i + 1]:
                     error += (neuron['weights'][j] * neuron['delta'])
@@ -152,27 +153,39 @@ def update_weights(network, row, l_rate):
             inputs = [neuron['output'] for neuron in network[i - 1]]
         for neuron in network[i]:
             for j in range(len(inputs)):
-                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]  # что делает?
             neuron['weights'][-1] += l_rate * neuron['delta']
 
 
 # Train a network for a fixed number of epochs
-def train_network(network, train, l_rate, n_epoch, n_outputs):
+def train_network(network, train, test, l_rate, n_epoch, n_outputs):
+    accuracy_by_epoch = []
     for epoch in range(n_epoch):
         for row in train:
             outputs = forward_propagate(network, row)
             expected = [0 for i in range(n_outputs)]
-            expected[row[-1]] = 1
+            expected[int(row[-1])] = 1
             backward_propagate_error(network, expected)
             update_weights(network, row, l_rate)
+        predictions = list()
+        for row in test:
+            prediction = predict(network, row)
+            predictions.append(prediction)
+        actual = []
+        for i in range(100):
+            actual.append(int(test[i][5]))
+        # predicted = back_propagation(dataset, test, 0.5, 20, 4)
+        accuracy_by_epoch.append(accuracy_metric(actual, predictions))
+    return accuracy_by_epoch
 
 
 # Initialize a network
-def initialize_network(n_inputs, n_hidden, n_outputs):
+def initialize_network(n_inputs, n_hidden, n_outputs):  # везде стоят i
     network = list()
     hidden_layer = [{'weights': [random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
     network.append(hidden_layer)
-    output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in range(n_outputs)]
+    output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in
+                    range(n_outputs)]  # зачем второй цикл, авходной вектор же одномерный
     network.append(output_layer)
     return network
 
@@ -188,10 +201,12 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
     network = initialize_network(n_inputs, n_hidden, n_outputs)
-    train_network(network, train, l_rate, n_epoch, n_outputs)
+    n_outputs = 3
+    train_network(network, train, test, l_rate, n_epoch, n_outputs)
     predictions = list()
     for row in test:
         prediction = predict(network, row)
+        print(predict)
         predictions.append(prediction)
     return (predictions)
 
@@ -212,17 +227,18 @@ if __name__ == "__main__":
     # end_pos = predict_pos(b_x, b_y, b_v_x, b_v_y, st_x)
     # -> st_x + end_pos -> res(moving_direction) == input[-1]
 
-    train_network(network, dataset, 0.5, 20, n_outputs)
-    inputs = list()     # b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n
+    # train_network(network, dataset, 0.5, 20, n_outputs)
+    inputs = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  # list()     # b_x_n, b_y_n, b_v_x_n, b_v_y_n, st_x_n
+    # inputs.append([0.0,0.0,0.0,0.0,0.0])
     res = predict(network, inputs)  # -> res
 
     if False:
         filename = 'seeds_dataset.csv'
         dataset = load_csv(filename)
-        for i in range(len(dataset[0])-1):
+        for i in range(len(dataset[0]) - 1):
             str_column_to_float(dataset, i)
         # convert class column to integers
-        str_column_to_int(dataset, len(dataset[0])-1)
+        str_column_to_int(dataset, len(dataset[0]) - 1)
         # normalize input variables
         minmax = dataset_minmax(dataset)
         normalize_dataset(dataset, minmax)
@@ -233,4 +249,4 @@ if __name__ == "__main__":
         n_hidden = 5
         scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, n_hidden)
         print('Scores: %s' % scores)
-        print('Mean Accuracy: %.3f%%' % (sum(scores)/float(len(scores))))
+        print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
