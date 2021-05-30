@@ -6,7 +6,7 @@ from csv import reader
 from math import exp
 
 
-# Load a CSV file
+# Загрузка CSV файла с данными
 def load_csv(filename):
     dataset = list()
     with open(filename, 'r') as file:
@@ -18,13 +18,13 @@ def load_csv(filename):
     return dataset
 
 
-# Convert string column to float
+# Преобразовываем string колонку во float
 def str_column_to_float(dataset, column):
     for row in dataset:
         row[column] = float(row[column].strip())
 
 
-# Convert string column to integer
+# Преобразовываем string колонку в integer
 def str_column_to_int(dataset, column):
     class_values = [row[column] for row in dataset]
     unique = set(class_values)
@@ -36,21 +36,21 @@ def str_column_to_int(dataset, column):
     return lookup
 
 
-# Find the min and max values for each column
+# Находим min и max значения для каждой колонки
 def dataset_minmax(dataset):
     minmax = list()
     stats = [[min(column), max(column)] for column in zip(*dataset)]
     return stats
 
 
-# Rescale dataset columns to the range 0-1
+# Нормализуем данные
 def normalize_dataset(dataset, minmax):
     for row in dataset:
         for i in range(len(row) - 1):
             row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
 
 
-# Split a dataset into k folds
+# Разделяем данные на k частей
 def cross_validation_split(dataset, n_folds):
     dataset_split = list()
     dataset_copy = list(dataset)
@@ -64,7 +64,7 @@ def cross_validation_split(dataset, n_folds):
     return dataset_split
 
 
-# Calculate accuracy percentage
+# Считаем метрику
 def accuracy_metric(actual, predicted):
     correct = 0
     for i in range(len(actual)):
@@ -73,7 +73,7 @@ def accuracy_metric(actual, predicted):
     return correct / float(len(actual)) * 100.0
 
 
-# Evaluate an algorithm using a cross validation split
+# Оцениваем алгоритм с использование перекрестной проверки
 def evaluate_algorithm(dataset, algorithm, n_folds, *args):
     folds = cross_validation_split(dataset, n_folds)
     scores = list()
@@ -93,7 +93,7 @@ def evaluate_algorithm(dataset, algorithm, n_folds, *args):
     return scores
 
 
-# Calculate neuron activation for an input
+# Считаем значение активации для нейрона
 def activate(weights, inputs):
     activation = weights[-1]
     for i in range(len(weights) - 1):
@@ -101,12 +101,12 @@ def activate(weights, inputs):
     return activation
 
 
-# Transfer neuron activation
+# Активация нейрона
 def transfer(activation):
     return 1.0 / (1.0 + exp(-activation))
 
 
-# Forward propagate input to a network output
+# Распространение вперед от входного до выходного слоя
 def forward_propagate(network, row):
     inputs = row
     for layer in network:
@@ -120,18 +120,18 @@ def forward_propagate(network, row):
     return inputs
 
 
-# Calculate the derivative of an neuron output
+# Вычисляем производную выходного нейрона
 def transfer_derivative(output):
     return output * (1.0 - output)
 
 
-# Backpropagate error and store in neurons
+# Вычисляем ошибку обратного распространения и сохраняем в нейронах
 def backward_propagate_error(network, expected):
     for i in reversed(range(len(network))):
         layer = network[i]
         errors = list()
         if i != len(network) - 1:
-            for j in range(len(layer)):  # по чему здесь пробегаем?
+            for j in range(len(layer)):
                 error = 0.0
                 for neuron in network[i + 1]:
                     error += (neuron['weights'][j] * neuron['delta'])
@@ -145,7 +145,7 @@ def backward_propagate_error(network, expected):
             neuron['delta'] = errors[j] * transfer_derivative(neuron['output'])
 
 
-# Update network weights with error
+# Обновляем веса с учетом ошибки
 def update_weights(network, row, l_rate):
     for i in range(len(network)):
         inputs = row[:-1]
@@ -153,11 +153,11 @@ def update_weights(network, row, l_rate):
             inputs = [neuron['output'] for neuron in network[i - 1]]
         for neuron in network[i]:
             for j in range(len(inputs)):
-                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]  # что делает?
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
             neuron['weights'][-1] += l_rate * neuron['delta']
 
 
-# Train a network for a fixed number of epochs
+# Обучаем нейронную сеть на n эпохах
 def train_network(network, train, test, l_rate, n_epoch, n_outputs):
     accuracy_by_epoch = []
     for epoch in range(n_epoch):
@@ -172,31 +172,30 @@ def train_network(network, train, test, l_rate, n_epoch, n_outputs):
             prediction = predict(network, row)
             predictions.append(prediction)
         actual = []
-        for i in range(100):
+        for i in range(len(test)):
             actual.append(int(test[i][5]))
-        # predicted = back_propagation(dataset, test, 0.5, 20, 4)
         accuracy_by_epoch.append(accuracy_metric(actual, predictions))
     return accuracy_by_epoch
 
 
-# Initialize a network
+# Инициализируем нейронную сеть
 def initialize_network(n_inputs, n_hidden, n_outputs):  # везде стоят i
     network = list()
     hidden_layer = [{'weights': [random() for i in range(n_inputs + 1)]} for i in range(n_hidden)]
     network.append(hidden_layer)
     output_layer = [{'weights': [random() for i in range(n_hidden + 1)]} for i in
-                    range(n_outputs)]  # зачем второй цикл, авходной вектор же одномерный
+                    range(n_outputs)] 
     network.append(output_layer)
     return network
 
 
-# Make a prediction with a network
+# Предсказываем с помощью нейронной сети
 def predict(network, row):
     outputs = forward_propagate(network, row)
     return outputs.index(max(outputs))
 
 
-# Backpropagation Algorithm With Stochastic Gradient Descent
+# Алгоритм обратного распространения ошибки со стохастическим градиентным спуском
 def back_propagation(train, test, l_rate, n_epoch, n_hidden):
     n_inputs = len(train[0]) - 1
     n_outputs = len(set([row[-1] for row in train]))
@@ -210,7 +209,7 @@ def back_propagation(train, test, l_rate, n_epoch, n_hidden):
         predictions.append(prediction)
     return (predictions)
 
-
+'''
 if __name__ == "__main__":
     n_outputs = 3
     n_inputs = 6
@@ -250,3 +249,4 @@ if __name__ == "__main__":
         scores = evaluate_algorithm(dataset, back_propagation, n_folds, l_rate, n_epoch, n_hidden)
         print('Scores: %s' % scores)
         print('Mean Accuracy: %.3f%%' % (sum(scores) / float(len(scores))))
+'''
