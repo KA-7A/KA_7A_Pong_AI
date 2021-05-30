@@ -4,6 +4,15 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
+import pygame
+from Stick import Stick
+import functions
+from Ball import Ball
+from backpropagation import *
+import numpy as np
+import ai_pols
+from globals import *
+
 #player1: 1-ручная нейросеть с маленьким набором данных
 #         2-ручная нейросеть с большим набором данных
 #         3-реакционный алгоритм
